@@ -1,0 +1,21 @@
+{
+  "name": "singlepageapp",
+  "version": "1.0.0",
+  "description": "single page app with pure javascript",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "SPA",
+    "express",
+    "bodyparser",
+    "javascript"
+  ],
+  "author": "erno",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1"
+  }
+}

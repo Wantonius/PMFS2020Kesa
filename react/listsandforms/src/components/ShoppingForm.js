@@ -34,12 +34,18 @@ export default class ShoppingForm extends React.Component {
 	}
 	
 	render() {
+		let style ={
+			width:600,
+			margin:"auto"
+		}
 		return(
+			<div style={style}>
 			<Form onSubmit={this.onSubmit}>
 				<Form.Field>
 					<label htmlFor="type">Type:</label>
 					<input type="text"
 							name="type"
+							required={true}
 							onChange={this.onChange}
 							value={this.state.type}/>
 				</Form.Field>
@@ -47,6 +53,9 @@ export default class ShoppingForm extends React.Component {
 					<label htmlFor="count">Count:</label>
 					<input type="number"
 							name="count"
+							required={true}
+							minimum="0"
+							step="1"
 							onChange={this.onChange}
 							value={this.state.count}/>
 				</Form.Field>
@@ -54,11 +63,15 @@ export default class ShoppingForm extends React.Component {
 					<label htmlFor="price">Price:</label>
 					<input type="number"
 							name="price"
+							required={true}
+							minimum="0"
+							step="0.01"
 							onChange={this.onChange}
 							value={this.state.price}/>
 				</Form.Field>
 				<Button type="submit">Add</Button>
 			</Form>
+			</div>
 		)
 	}
 	

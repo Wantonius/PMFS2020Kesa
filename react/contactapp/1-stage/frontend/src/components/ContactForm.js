@@ -4,21 +4,40 @@ import {Form,Button,Label,Header} from 'semantic-ui-react'
 export default class ContactForm extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = {
-			firstname:"",
-			lastname:"",
-			nickname:"",
-			title:"",
-			phone:[],
-			addphone:"",
-			mobile:[],
-			addmobile:"",
-			email:[],
-			addemail:"",
-			street:"",
-			city:"",
-			postcode:"",
-			country:""
+		if(props.mode === "Add") {
+			this.state = {
+				firstname:"",
+				lastname:"",
+				nickname:"",
+				title:"",
+				phone:[],
+				addphone:"",
+				mobile:[],
+				addmobile:"",
+				email:[],
+				addemail:"",
+				street:"",
+				city:"",
+				postcode:"",
+				country:""
+			} 
+		} else {
+			this.state = {
+				firstname:props.contact.firstname,
+				lastname:props.contact.lastname,
+				nickname:props.contact.nickname,
+				title:props.contact.title,
+				phone:props.contact.phone,
+				addphone:"",
+				mobile:props.contact.mobile,
+				addmobile:"",
+				email:props.contact.email,
+				addemail:"",
+				street:props.contact.street,
+				city:props.contact.city,
+				postcode:props.contact.postcode,
+				country:props.contact.country			
+			}
 		}
 	}
 	
@@ -47,7 +66,12 @@ export default class ContactForm extends React.Component {
 			postcode:this.state.postcode,
 			country:this.state.country
 		}
-		this.props.addContact(contact);
+		if(this.props.mode === "Add") {
+			this.props.addContact(contact);
+		} else {
+			contact.id = this.props.contact.id;
+			this.props.editContact(contact);
+		}
 		this.setState({
 			firstname:"",
 			lastname:"",
@@ -246,7 +270,7 @@ export default class ContactForm extends React.Component {
 							value={this.state.country}/>				
 				</Form.Field>				
 			</Form>
-			<Button onClick={this.onSubmit}>Save</Button>
+			<Button onClick={this.onSubmit}>{this.props.mode}</Button>
 		</div>
 		)
 	}

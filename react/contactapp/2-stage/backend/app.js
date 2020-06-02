@@ -1,6 +1,7 @@
 const express = require("express")
 const bodyParser = require("body-parser");
 const contactrouter = require("./routes/contactrouter");
+const bcrypt = require("bcrypt");
 
 // initialization 
 
@@ -13,7 +14,7 @@ app.use(bodyParser.json());
 
 const registeredUsers = [];
 const loggedSessions = [];
-const ttl_diff = 1000*60*60;
+const ttl_diff = 1000*60*60
 
 /*
 	Session data
@@ -72,13 +73,19 @@ app.post("/register",function(req,res) {
 			return res.status(409).json({message:"Username is already in use"})
 		}
 	}
-	let user = {
-		username:req.body.username,
-		password:req.body.password
-	}
-	registeredUsers.push(user);
-	console.log(registeredUsers);
-	return res.status(200).json({message:"success"});
+	bcrypt.hash(req.body.password,16,function(err,hash) {
+		if(err) {
+			console.log("Failed to hash password, Reason:",err);
+			return res.status(422).json({message:"Please provide proper credentials"})
+		}
+		let user = {
+			username:req.body.username,
+			password:hash
+		}
+		registeredUsers.push(user);
+		console.log(registeredUsers);
+		return res.status(200).json({message:"success"});
+	});
 })
 
 app.post("/login",function(req,res) {
@@ -91,9 +98,17 @@ app.post("/login",function(req,res) {
 	if(req.body.username.length < 4 || req.body.password.length <8) {
 		return res.status(422).json({message:"Please provide proper credentials"})
 	}
+	let found = false;
 	for(let i=0;i<registeredUsers.length;i++) {
 		if(req.body.username === registeredUsers[i].username) {
-			if(req.body.password === registeredUsers[i].password) {
+			found = true;
+			bcrypt.compare(req.body.password,registeredUsers[i].password, function(err,success) {
+				if(err) {
+					return res.status(422).json({message:"Please provide proper credentials"})					
+				}
+				if(!success) {
+					return res.status(403).json({message:"login failed"});					
+				}
 				let token = createToken();
 				let ttl = new Date().getTime()+ttl_diff;
 				let session = {
@@ -104,10 +119,26 @@ app.post("/login",function(req,res) {
 				loggedSessions.push(session);
 				console.log(loggedSessions);
 				return res.status(200).json({token:token})
-			}
+			})
 		}
 	}
-	return res.status(403).json({message:"login failed"});
+	if(!found) {
+		return res.status(403).json({message:"login failed"});
+	}
+})
+
+app.post("/logout",function(req,res) {
+	let token = req.headers.token;
+	if(!token) {
+		return res.status(404).json({message:"not found"})
+	}
+	for(let i=0;i<loggedSessions.length;i++) {
+		if(token === loggedSessions[i].token) {
+			loggedSessions.splice(i,1);
+			return res.status(200).json({message:"success"})
+		}
+	}
+	return res.status(404).json({message:"not found"})
 })
 
 app.use("/api",isUserLogged,contactrouter);

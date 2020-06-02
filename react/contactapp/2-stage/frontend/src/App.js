@@ -16,7 +16,8 @@ class App extends React.Component {
 			mode:"Add",
 			contact:{},
 			isLogged:false,
-			token:""
+			token:"",
+			loading:false
 		}
 	}
 	
@@ -43,6 +44,12 @@ class App extends React.Component {
 			mode:"Edit"
 		})
 		this.props.history.push("/contact");
+		}
+	
+	setLoadingState = (loading) => {
+		this.setState({
+			loading:loading
+		})
 	}
 	
 	//REST API
@@ -54,7 +61,9 @@ class App extends React.Component {
 			headers:{"Content-type":"application/json",
 					"token":this.state.token}			
 		}
+		this.setLoadingState(true);
 		fetch("/api/contact",request).then(response => {
+			this.setLoadingState(false);
 			if(response.ok) {
 				response.json().then(data => {
 					this.setState({
@@ -65,9 +74,21 @@ class App extends React.Component {
 					console.log("Failed to parse JSON data:",error)
 				})
 			} else {
+				if(response.status === 403) {
+					this.setState({
+						token:"",
+						isLogged:false,
+						list:[],
+						mode:"Add",
+						contact:{},
+						loading:false
+					})
+					sessionStorage.removeItem("state");					
+				}
 				console.log("Server responded with status:",response.status) 
 			}
 		}).catch(error => {
+			this.setLoadingState(false);
 			console.log("Server responded with an error:",error);
 		})
 	}
@@ -80,13 +101,26 @@ class App extends React.Component {
 					"token":this.state.token},
 			body:JSON.stringify(contact)
 		}
+		this.setLoadingState(true);
 		fetch("/api/contact",request).then(response => {
 			if(response.ok) {
 				this.getContactList();
 			} else {
+				this.setLoadingState(false);
+				if(response.status === 403) {
+					this.setState({
+						token:"",
+						isLogged:false,
+						list:[],
+						mode:"Add",
+						contact:{}
+					})
+					sessionStorage.removeItem("state");					
+				}
 				console.log("Server responded with status:",response.status)
 			}
 		}).catch(error => {
+			this.setLoadingState(false);
 			console.log(error);
 		})
 	}
@@ -98,13 +132,27 @@ class App extends React.Component {
 			headers:{"Content-type":"application/json",
 					"token":this.state.token}
 		}
+		this.setLoadingState(true);
 		fetch("/api/contact/"+id,request).then(response => {
 			if(response.ok) {
 				this.getContactList();
 			} else {
+				this.setLoadingState(false);
+				if(response.status === 403) {
+					this.setState({
+						token:"",
+						isLogged:false,
+						list:[],
+						mode:"Add",
+						contact:{},
+						loading:false
+					})
+					sessionStorage.removeItem("state");					
+				}
 				console.log("Server responded with status:",response.status)
 			}
 		}).catch(error => {
+			this.setLoadingState(false);
 			console.log(error);
 		})
 	}
@@ -118,6 +166,7 @@ class App extends React.Component {
 					"token":this.state.token},
 			body:JSON.stringify(contact)
 		}
+		this.setLoadingState(true);
 		fetch("/api/contact/"+contact.id,request).then(response => {
 			if(response.ok) {
 				this.getContactList();
@@ -127,9 +176,21 @@ class App extends React.Component {
 				})
 				this.props.history.push("/");
 			} else {
+				this.setLoadingState(false);
+				if(response.status === 403) {
+					this.setState({
+						token:"",
+						isLogged:false,
+						list:[],
+						mode:"Add",
+						contact:{}
+					})
+					sessionStorage.removeItem("state");					
+				}
 				console.log("Server responded with status:",response.status)
 			}
 		}).catch(error => {
+			this.setLoadingState(false);
 			console.log(error);
 		})
 	}	
@@ -143,7 +204,9 @@ class App extends React.Component {
 			headers:{"Content-type":"application/json"},
 			body:JSON.stringify(user)
 		}
+		this.setLoadingState(true);
 		fetch("/register",request).then(response => {
+			this.setLoadingState(false);
 			if(response.ok) {
 				alert("Register success");
 			} else {
@@ -154,6 +217,7 @@ class App extends React.Component {
 				}
 			}
 		}).catch(error => {
+			this.setLoadingState(false);
 			console.log(error);
 		})
 	}
@@ -165,7 +229,9 @@ class App extends React.Component {
 			headers:{"Content-type":"application/json"},
 			body:JSON.stringify(user)
 		}
+		this.setLoadingState(true);
 		fetch("/login",request).then(response => {
+			this.setLoadingState(false);
 			if(response.ok) {
 				response.json().then(data => {
 					this.setState({
@@ -182,6 +248,31 @@ class App extends React.Component {
 				console.log("Server responded with status:",response.status);
 			}
 		}).catch(error => {
+			this.setLoadingState(false);
+			console.log(error);
+		})
+	}
+	
+	onLogout = () => {
+		let request = {
+			method:"POST",
+			mode:"cors",
+			headers: {"Content-type":"application/json",
+			"token":this.state.token}
+		}
+		this.setLoadingState(true);
+		fetch("/logout",request).then(response => {
+			this.setState({
+				token:"",
+				isLogged:false,
+				list:[],
+				mode:"Add",
+				contact:{},
+				loading:false
+			})
+			sessionStorage.removeItem("state");
+		}).catch(error => {
+			this.setLoadingState(false);
 			console.log(error);
 		})
 	}
@@ -189,7 +280,9 @@ class App extends React.Component {
 	render() {
 		return (
 			<div className="App">
-				<Navbar isLogged={this.state.isLogged}/>
+				<Navbar isLogged={this.state.isLogged} 
+				onLogout={this.onLogout}
+				loading={this.state.loading}/>
 				<Switch>
 				<Route exact path="/" render={() =>(
 					this.state.isLogged ?

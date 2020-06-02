@@ -13,7 +13,7 @@ export default class Navbar extends React.Component {
 		<div style={style}>
 			<Header>Contact App</Header>
 			<List>
-				<List.Item><Link to="/">Contacts</Link></List.Item>
+				<List.Item><Link to="/list">Contacts</Link></List.Item>
 				<List.Item><Link to="/contact">Add new contact</Link></List.Item>
 			</List>
 		</div>

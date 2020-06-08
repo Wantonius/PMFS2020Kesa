@@ -3,7 +3,8 @@ const bodyParser = require("body-parser");
 const contactrouter = require("./routes/contactrouter");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
-
+const userModel = require("./models/user");
+const sessionModel = require("./models/session");
 // initialization 
 
 let app = express();
@@ -18,8 +19,6 @@ mongoose.connect("mongodb://localhost/pmfskesa").then(
 
 //user management
 
-const registeredUsers = [];
-const loggedSessions = [];
 const ttl_diff = 1000*60*60
 
 /*
@@ -46,20 +45,36 @@ isUserLogged = (req,res,next) => {
 	if(!token) {
 		return res.status(403).json({message:"forbidden"})
 	}
-	for(let i=0;i<loggedSessions.length;i++) {
-		if(token === loggedSessions[i].token) {
-			let now = new Date().getTime();
-			if(now > loggedSessions[i].ttl) {
-				loggedSessions.splice(i,1);
-				return res.status(403).json({message:"forbidden"})
-			}
-			loggedSessions[i].ttl = now+ttl_diff;
-			req.session = {};
-			req.session.username = loggedSessions[i].username;
-			return next();
+	sessionModel.findOne({"token":token}, function(err,session) {
+		if(err) {
+			console.log("Failed to find session. Reason:",err);
+			return res.status(403).json({message:"forbidden"})
 		}
-	}
-	return res.status(403).json({message:"forbidden"})
+		if(!session) {
+			console.log("Session is null")
+			return res.status(403).json({message:"forbidden"})
+		}
+		let now = Date.now();
+		if(now > session.ttl) {
+			sessionModel.deleteOne({"_id":session._id},function(err) {
+				if(err) {
+					console.log("Failed to remove session. Reason:",err);
+				}
+				return res.status(403).json({message:"forbidden"})
+			})
+		} else {
+			req.session = {}
+			req.session.username = session.username
+			session.ttl = now+ttl_diff
+			session.save(function(err) {
+				if(err) {
+					console.log("Failed to save session:",err);
+				}
+				return next();
+			})
+		}
+	})
+	
 }
 
 //LOGIN API
@@ -74,23 +89,24 @@ app.post("/register",function(req,res) {
 	if(req.body.username.length < 4 || req.body.password.length <8) {
 		return res.status(422).json({message:"Please provide proper credentials"})
 	}
-	for(let i=0;i<registeredUsers.length;i++) {
-		if(req.body.username === registeredUsers[i].username) {
-			return res.status(409).json({message:"Username is already in use"})
-		}
-	}
 	bcrypt.hash(req.body.password,16,function(err,hash) {
 		if(err) {
 			console.log("Failed to hash password, Reason:",err);
 			return res.status(422).json({message:"Please provide proper credentials"})
 		}
-		let user = {
+		let user = new userModel({
 			username:req.body.username,
 			password:hash
-		}
-		registeredUsers.push(user);
-		console.log(registeredUsers);
-		return res.status(200).json({message:"success"});
+		})
+		user.save(function(err,user) {
+			if(err) {
+				console.log("Register failed. Reason:",err);
+				return res.status(409).json({message:"username is already in use"})
+			} else {
+				console.log("User registered. Username:",user.username)
+				return res.status(200).json({message:"success"});
+			}
+		})
 	});
 })
 
@@ -104,33 +120,39 @@ app.post("/login",function(req,res) {
 	if(req.body.username.length < 4 || req.body.password.length <8) {
 		return res.status(422).json({message:"Please provide proper credentials"})
 	}
-	let found = false;
-	for(let i=0;i<registeredUsers.length;i++) {
-		if(req.body.username === registeredUsers[i].username) {
-			found = true;
-			bcrypt.compare(req.body.password,registeredUsers[i].password, function(err,success) {
+	userModel.findOne({"username":req.body.username}, function(err,user) {
+		if(err) {
+			console.log("Failed to find user. Reason:",err);
+			return res.status(422).json({message:"Please provide proper credentials"})
+		}
+		if(!user) {
+			console.log("User is null");
+			return res.status(422).json({message:"Please provide proper credentials"})	
+		}
+		bcrypt.compare(req.body.password,user.password, function(err,success) {
+			if(err) {
+				return res.status(422).json({message:"Please provide proper credentials"})					
+			}
+			if(!success) {
+				return res.status(403).json({message:"login failed"});					
+			}
+			let token = createToken();
+			let ttl = new Date().getTime()+ttl_diff;
+			let session = new sessionModel({
+				username:req.body.username,
+				ttl:ttl,
+				token:token
+			})
+			session.save(function(err,session){
 				if(err) {
-					return res.status(422).json({message:"Please provide proper credentials"})					
-				}
-				if(!success) {
-					return res.status(403).json({message:"login failed"});					
-				}
-				let token = createToken();
-				let ttl = new Date().getTime()+ttl_diff;
-				let session = {
-					username:req.body.username,
-					ttl:ttl,
-					token:token
-				}
-				loggedSessions.push(session);
-				console.log(loggedSessions);
+					console.log("Session creation failed. Reason:",err)
+					return res.status(403).json({message:"login failed"});
+				}				
 				return res.status(200).json({token:token})
 			})
-		}
-	}
-	if(!found) {
-		return res.status(403).json({message:"login failed"});
-	}
+		})
+	})
+		
 })
 
 app.post("/logout",function(req,res) {
@@ -138,13 +160,16 @@ app.post("/logout",function(req,res) {
 	if(!token) {
 		return res.status(404).json({message:"not found"})
 	}
-	for(let i=0;i<loggedSessions.length;i++) {
-		if(token === loggedSessions[i].token) {
-			loggedSessions.splice(i,1);
-			return res.status(200).json({message:"success"})
+	sessionModel.deleteOne({"token":token},function(err,session) {
+		if(err) {
+			console.log("Failed to delete session. Reason:",err);
+			return res.status(409).json({message:"conflict"})
 		}
-	}
-	return res.status(404).json({message:"not found"})
+		if(!session) {
+			return res.status(404).json({message:"not found"})
+		}
+		return res.status(200).json({message:"success"})
+	})
 })
 
 app.use("/api",isUserLogged,contactrouter);

@@ -1,4 +1,4 @@
-
+import {clearContactReducerState, getContacts} from './contactActions'
 
 //Action constants
 
@@ -51,6 +51,7 @@ export const onLogin = (user) => {
 			if(response.ok) {
 				response.json().then(data => {
 					dispatch(loginSuccess(data.token));
+					dispatch(getContacts(data.token));
 				}).catch(error => {
 					dispatch(loginFailed("Failed to parse response. Reason:",error))
 				})
@@ -75,8 +76,10 @@ export const onLogout = (token) => {
 		dispatch(loading())
 		fetch("/logout",request).then(response => {
 			dispatch(logoutSuccess())
+			dispatch(clearContactReducerState())
 		}).catch(error => {
 			dispatch(logoutFailed("Server responded with an error",error))
+			dispatch(clearContactReducerState())
 		})
 	}
 }

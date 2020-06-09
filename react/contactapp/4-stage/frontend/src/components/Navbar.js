@@ -42,10 +42,10 @@ class Navbar extends React.Component {
 
 const mapStateToProps = (state) => {
 	return {
-		isLogged:state.isLogged,
-		token:state.token,
-		loading:state.loading,
-		error:state.error
+		isLogged:state.login.isLogged,
+		token:state.login.token,
+		loading:state.login.loading,
+		error:state.login.error
 	}
 }
 

@@ -1,10 +1,8 @@
 import React from 'react';
 import {Table,Button} from 'semantic-ui-react';
-
+import {connect} from 'react-redux'
 
 class ContactList extends React.Component {
-
-	
 
 	render() {
 	
@@ -28,6 +26,7 @@ class ContactList extends React.Component {
 		return (
 			<Table celled>
 				<Table.Header>
+				<Table.Row>
 					<Table.HeaderCell>Title</Table.HeaderCell>
 					<Table.HeaderCell>Firstname</Table.HeaderCell>					
 					<Table.HeaderCell>Lastname</Table.HeaderCell>	
@@ -37,6 +36,7 @@ class ContactList extends React.Component {
 					<Table.HeaderCell>Email</Table.HeaderCell>	
 					<Table.HeaderCell>Remove</Table.HeaderCell>	
 					<Table.HeaderCell>Edit</Table.HeaderCell>	
+				</Table.Row>
 				</Table.Header>
 				<Table.Body>
 				{contactItems}
@@ -47,4 +47,11 @@ class ContactList extends React.Component {
 	}
 }
 
-export default ContactList;
+const mapStateToProps = (state) => {
+	return {
+		token:state.login.token,
+		list:state.contact.list
+	}
+}
+
+export default connect(mapStateToProps)(ContactList);

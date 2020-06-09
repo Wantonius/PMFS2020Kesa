@@ -87,7 +87,7 @@ router.delete("/contact/:id",function(req,res) {
 		if(!contact) {
 			return res.status(404).json({message:"not found"})
 		}
-		if(contact.owner === req.session.owner) {
+		if(contact.owner === req.session.username) {
 			contactModel.deleteOne({"_id":contact._id}, function(err) {
 				if(err) {
 					console.log("Failed to delete contact. Reason",err);
@@ -134,7 +134,7 @@ router.put("/contact/:id",function(req,res) {
 		if(!contact) {
 			return res.status(404).json({message:"not found"})
 		}
-		if(contact.owner === req.session.owner) {
+		if(contact.owner === req.session.username) {
 			contactModel.replaceOne({"_id":req.params.id},tempContact,function(err) {
 				if(err) {
 					console.log("Failed to update contact. Reason",err);

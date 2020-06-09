@@ -1,7 +1,9 @@
 import React from 'react';
 import {Form,Button,Label,Header} from 'semantic-ui-react'
+import {connect} from 'react-redux';
+import {addContact,editContact} from '../actions/contactActions';
 
-export default class ContactForm extends React.Component {
+class ContactForm extends React.Component {
 	constructor(props) {
 		super(props);
 		if(props.mode === "Add") {
@@ -67,10 +69,10 @@ export default class ContactForm extends React.Component {
 			country:this.state.country
 		}
 		if(this.props.mode === "Add") {
-			this.props.addContact(contact);
+			this.props.dispatch(addContact(this.props.token,contact));
 		} else {
-			contact.id = this.props.contact.id;
-			this.props.editContact(contact);
+			contact._id = this.props.contact._id;
+			this.props.dispatch(editContact(this.props.token,contact));
 		}
 		this.setState({
 			firstname:"",
@@ -276,3 +278,13 @@ export default class ContactForm extends React.Component {
 	}
 
 }
+
+const mapStateToProps = (state) => {
+	return {
+		token:state.login.token,
+		contact:state.contact.contact,
+		mode:state.contact.mode
+	}
+}
+
+export default connect(mapStateToProps)(ContactForm);

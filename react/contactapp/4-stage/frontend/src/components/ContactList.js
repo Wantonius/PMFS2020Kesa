@@ -1,8 +1,15 @@
 import React from 'react';
 import {Table,Button} from 'semantic-ui-react';
 import {connect} from 'react-redux'
+import {removeContact,changeMode} from '../actions/contactActions';
+import {withRouter} from 'react-router-dom';
 
 class ContactList extends React.Component {
+
+	changeMode = (contact) => {
+		this.props.dispatch(changeMode("Edit",contact))
+		this.props.history.push("/contact")
+	}
 
 	render() {
 	
@@ -16,10 +23,10 @@ class ContactList extends React.Component {
 				<Table.Cell>{contact.mobile[0]}</Table.Cell>
 				<Table.Cell>{contact.email[0]}</Table.Cell>
 				<Table.Cell><Button name={contact._id} 
-				onClick={() => this.props.removeFromList(contact._id)}>
+				onClick={() => this.props.dispatch(removeContact(this.props.token,contact._id))}>
 				Remove</Button></Table.Cell>
 				<Table.Cell><Button name={contact._id} 
-				onClick={() => this.props.editItem(contact)}>
+				onClick={() => {this.changeMode(contact)}}>
 				Edit</Button></Table.Cell>
 			</Table.Row>
 			)
@@ -54,4 +61,4 @@ const mapStateToProps = (state) => {
 	}
 }
 
-export default connect(mapStateToProps)(ContactList);
+export default withRouter(connect(mapStateToProps)(ContactList));

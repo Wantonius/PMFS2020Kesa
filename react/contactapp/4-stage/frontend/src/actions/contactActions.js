@@ -36,13 +36,109 @@ export const getContacts = (token) => {
 					dispatch(logoutSuccess());
 					dispatch(clearContactReducerState());
 				} else {
-					dispatch(fetchContactsFailed("Server responded with a status:",response.status))
+					dispatch(fetchContactsFailed("Server responded with a status:"+response.status))
 				}
 			}
 		}).catch(error => {
 			dispatch(endLoading());
-			dispatch(fetchContactsFailed("Server responded with an error:",error))
+			dispatch(fetchContactsFailed("Server responded with an error:"+error))
 		})
+	}
+}
+
+export const addContact = (token,contact) => {
+	return dispatch => {
+		let request = {
+			method:"POST",
+			mode:"cors",
+			headers: {"Content-type":"application/json",
+			token:token},
+			body:JSON.stringify(contact)
+		}
+		dispatch(loading());
+		fetch("/api/contact",request).then(response => {
+			if(response.ok) {
+				dispatch(addContactSuccess());
+				dispatch(getContacts(token))
+			} else {
+				dispatch(endLoading());
+				if(response.status === 403) {
+					dispatch(addContactFailed("Server responded with a session failure. Logging out!"));
+					dispatch(logoutSuccess());
+					dispatch(clearContactReducerState());
+				} else {
+					dispatch(addContactFailed("Server responded with a status:"+response.status))
+				}				
+			}
+		}).catch(error => {
+			dispatch(endLoading());
+			dispatch(addContactFailed("Server responded with an error"+error))
+		});
+	}
+}
+
+export const removeContact = (token,id) => {
+	return dispatch => {
+		let request = {
+			method:"DELETE",
+			mode:"cors",
+			headers:{"Content-type":"application/json",
+			token:token}
+		}
+		dispatch(loading());
+		let url = "/api/contact/"+id
+		fetch(url,request).then(response => {
+			if(response.ok) {
+				dispatch(removeContactSuccess());
+				dispatch(getContacts(token))
+			} else {
+				dispatch(endLoading());
+				if(response.status === 403) {
+					dispatch(removeContactFailed("Server responded with a session failure. Logging out!"));
+					dispatch(logoutSuccess());
+					dispatch(clearContactReducerState());
+				} else {
+					dispatch(removeContactFailed("Server responded with a status:"+response.status))
+				}
+			}
+		}).catch(error => {
+			dispatch(endLoading());
+			dispatch(removeContactFailed("Server responded with an error:"+error));
+		})
+	}
+}
+
+export const editContact = (token,contact) => {
+	return dispatch => {
+		let request = {
+			method:"PUT",
+			mode:"cors",
+			headers:{"Content-type":"application/json",
+					  token:token},
+			body:JSON.stringify(contact)
+		}
+		let url = "/api/contact/"+contact._id
+		dispatch(loading());
+		fetch(url,request).then(response => {
+			if(response.ok) {
+				dispatch(editContactSuccess());
+				dispatch(getContacts(token))
+				dispatch(changeMode("Add",{}))
+			} else {
+				dispatch(endLoading())
+				if(response.status === 403) {
+					dispatch(editContactFailed("Server responded with a session failure. Logging out!"));
+					dispatch(logoutSuccess());
+					dispatch(clearContactReducerState());
+				} else {
+					dispatch(editContactFailed("Server responded with a status:"+response.status))
+				}
+			}
+		}).catch(error => {
+			dispatch(endLoading());
+			dispatch(editContactFailed("Server responded with an error"+error))
+		})
+	
 	}
 }
 

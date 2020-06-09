@@ -28,6 +28,12 @@ let contact = {
 
 router.get("/contact",function(req,res) {
 	let query = {"owner":req.session.username};
+	if(req.query.lastname) {
+		query = {
+			"owner":req.session.username,
+			"lastname":req.query.lastname
+		}
+	}
 	contactModel.find(query,function(err,contacts) {
 		if(err) {
 			console.log("Find contacts failed. Reason:",err);

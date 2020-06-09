@@ -2,6 +2,7 @@ import React from 'react';
 import {Form,Button,Label,Header} from 'semantic-ui-react'
 import {connect} from 'react-redux';
 import {addContact,editContact} from '../actions/contactActions';
+import {withRouter} from 'react-router-dom'
 
 class ContactForm extends React.Component {
 	constructor(props) {
@@ -74,6 +75,7 @@ class ContactForm extends React.Component {
 			contact._id = this.props.contact._id;
 			this.props.dispatch(editContact(this.props.token,contact));
 		}
+		this.props.history.push("/list");
 		this.setState({
 			firstname:"",
 			lastname:"",
@@ -287,4 +289,4 @@ const mapStateToProps = (state) => {
 	}
 }
 
-export default connect(mapStateToProps)(ContactForm);
+export default withRouter(connect(mapStateToProps)(ContactForm));

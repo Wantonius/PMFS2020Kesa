@@ -1,14 +1,35 @@
 import React from 'react';
 import {Table,Button} from 'semantic-ui-react';
 import {connect} from 'react-redux'
-import {removeContact,changeMode} from '../actions/contactActions';
+import {removeContact,changeMode,getContacts} from '../actions/contactActions';
 import {withRouter} from 'react-router-dom';
 
 class ContactList extends React.Component {
+	
+	constructor(props) {
+		super(props)
+		this.state = {
+			search:""
+		}
+	}
 
 	changeMode = (contact) => {
 		this.props.dispatch(changeMode("Edit",contact))
 		this.props.history.push("/contact")
+
+	}
+	
+	onChange = (event) => {
+		let state = {}
+		state[event.target.name] = event.target.value
+		this.setState(state);
+	}
+	
+	searchByLastname = (event) => {
+		this.props.dispatch(getContacts(this.props.token,this.state.search))
+		this.setState({
+			search:""
+		})
 	}
 
 	render() {
@@ -31,6 +52,13 @@ class ContactList extends React.Component {
 			</Table.Row>
 			)
 		return (
+		<div>
+			<label htmlFor="search">Search by lastname:</label>
+			<input type="text"
+					name="search"
+					value={this.state.search}
+					onChange={this.onChange}/>
+			<Button onClick={this.searchByLastname}>Search</Button>
 			<Table celled>
 				<Table.Header>
 				<Table.Row>
@@ -49,6 +77,7 @@ class ContactList extends React.Component {
 				{contactItems}
 				</Table.Body>
 			</Table>
+		</div>
 		)
 		
 	}

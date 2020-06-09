@@ -13,7 +13,7 @@ export const CHANGE_MODE = "CHANGE_MODE"
 
 //ASync actions
 
-export const getContacts = (token) => {
+export const getContacts = (token,search) => {
 	return dispatch => {
 		let request = {
 			method:"GET",
@@ -21,8 +21,12 @@ export const getContacts = (token) => {
 			headers: {"Content-type":"application/json",
 			"token":token}
 		}
+		let url = "/api/contact"
+		if(search) {
+			url = url + "?lastname="+search
+		}
 		dispatch(loading());
-		fetch("/api/contact",request).then(response => {
+		fetch(url,request).then(response => {
 			dispatch(endLoading());
 			if(response.ok) {
 				response.json().then(data => {

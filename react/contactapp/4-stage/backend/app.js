@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const userModel = require("./models/user");
 const sessionModel = require("./models/session");
+const path = require("path");
 // initialization 
 
 let app = express();
@@ -12,10 +13,12 @@ let port = process.env.PORT || 3001
 
 app.use(bodyParser.json());
 
-mongoose.connect("mongodb://localhost/pmfskesa").then(
+mongoose.connect("mongodb+srv://test:test@cluster0-ujjvo.mongodb.net/pmkesacontact?retryWrites=true&w=majority").then(
 	() => console.log("Connection to mongoDB successful"),
 	(err) => console.log("Failed to connect to MongoDB. Reason",err)
 );
+
+app.use(express.static(__dirname+"/build"));
 
 //user management
 
@@ -173,6 +176,10 @@ app.post("/logout",function(req,res) {
 })
 
 app.use("/api",isUserLogged,contactrouter);
+
+app.get("/*", function(req, res) {
+    res.sendFile(path.join(__dirname, "/build/index.html"));
+});
 
 app.listen(port);
 

@@ -5,6 +5,10 @@ const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const userModel = require("./models/user");
 const sessionModel = require("./models/session");
+const passport = require("passport");
+const localStrategy = require("passport-local").Strategy
+const session = require("express-session");
+const mongoStore = require("connect-mongo")(session);
 // initialization 
 
 let app = express();
@@ -17,16 +21,69 @@ mongoose.connect("mongodb://localhost/pmfskesa").then(
 	(err) => console.log("Failed to connect to MongoDB. Reason",err)
 );
 
-//user management
+app.use(session({
+	name:"pmkesa-contact-session",
+	resave:false,
+	secret:"myBestSecret",
+	saveUninitialized:false,
+	cookie:{maxAge:1000*60*60*24},
+	store: new mongoStore({
+		collection:"session",
+		mongooseConnection:mongoose.connection,
+		ttl:60*60*24
+	})
+}))
 
-const ttl_diff = 1000*60*60
+app.use(passport.initialize());
+app.use(passport.session());
 
-/*
-	Session data
-	username:String,
-	ttl:Number,
-	token:String
-*/
+// Passport login strategies
+
+passport.use("local-login",new localStrategy({
+	usernameField:"username",
+	passwordField:"password",
+	passReqToCallback:true
+},function(req,username,password,done){
+	userModel.findOne({"username":username}, function(err,user) {
+		if(err) {
+			console.log("Failed to find user. Reason:",err);
+			return done(err);
+		}
+		if(!user) {
+			console.log("User is null");
+			return done(null,false,{message:"Please provide proper credentials"})
+		}
+		bcrypt.compare(password,user.password, function(err,success) {
+			if(err) {
+				return done(err);				
+			}
+			if(!success) {
+				return done(null,false,{message:"Please provide proper credentials"})				
+			}
+			let token = createToken();
+			req.session.token = token;
+			req.session.username = username;
+			return done(null,user);
+		})
+	})	
+})
+)
+
+passport.serializeUser(function(user,done) {
+	done(null,user._id);
+})
+
+passport.deserializeUser(function(_id,done) {
+	userModel.findById(_id,function(err,user) {
+		if(err) {
+			return done(err);
+		}
+		if(!user) {
+			return done(null,false);
+		}
+		return done(null,user);
+	})
+})
 
 //HELPERS
 
@@ -45,36 +102,12 @@ isUserLogged = (req,res,next) => {
 	if(!token) {
 		return res.status(403).json({message:"forbidden"})
 	}
-	sessionModel.findOne({"token":token}, function(err,session) {
-		if(err) {
-			console.log("Failed to find session. Reason:",err);
-			return res.status(403).json({message:"forbidden"})
+	if(req.isAuthenticated()) {
+		if(token === req.session.token) {
+			return next();
 		}
-		if(!session) {
-			console.log("Session is null")
-			return res.status(403).json({message:"forbidden"})
-		}
-		let now = Date.now();
-		if(now > session.ttl) {
-			sessionModel.deleteOne({"_id":session._id},function(err) {
-				if(err) {
-					console.log("Failed to remove session. Reason:",err);
-				}
-				return res.status(403).json({message:"forbidden"})
-			})
-		} else {
-			req.session = {}
-			req.session.username = session.username
-			session.ttl = now+ttl_diff
-			session.save(function(err) {
-				if(err) {
-					console.log("Failed to save session:",err);
-				}
-				return next();
-			})
-		}
-	})
-	
+	}
+	return res.status(403).json({message:"forbidden"})	
 }
 
 //LOGIN API
@@ -110,49 +143,8 @@ app.post("/register",function(req,res) {
 	});
 })
 
-app.post("/login",function(req,res) {
-	if(!req.body) {
-		return res.status(422).json({message:"Please provide proper credentials"})
-	}
-	if(!req.body.username || !req.body.password) {
-		return res.status(422).json({message:"Please provide proper credentials"})
-	}
-	if(req.body.username.length < 4 || req.body.password.length <8) {
-		return res.status(422).json({message:"Please provide proper credentials"})
-	}
-	userModel.findOne({"username":req.body.username}, function(err,user) {
-		if(err) {
-			console.log("Failed to find user. Reason:",err);
-			return res.status(422).json({message:"Please provide proper credentials"})
-		}
-		if(!user) {
-			console.log("User is null");
-			return res.status(422).json({message:"Please provide proper credentials"})	
-		}
-		bcrypt.compare(req.body.password,user.password, function(err,success) {
-			if(err) {
-				return res.status(422).json({message:"Please provide proper credentials"})					
-			}
-			if(!success) {
-				return res.status(403).json({message:"login failed"});					
-			}
-			let token = createToken();
-			let ttl = new Date().getTime()+ttl_diff;
-			let session = new sessionModel({
-				username:req.body.username,
-				ttl:ttl,
-				token:token
-			})
-			session.save(function(err,session){
-				if(err) {
-					console.log("Session creation failed. Reason:",err)
-					return res.status(403).json({message:"login failed"});
-				}				
-				return res.status(200).json({token:token})
-			})
-		})
-	})
-		
+app.post("/login",passport.authenticate("local-login",{failureRedirect:"/"}),function(req,res) {
+	return res.status(200).json({token:req.session.token})	
 })
 
 app.post("/logout",function(req,res) {
@@ -160,16 +152,12 @@ app.post("/logout",function(req,res) {
 	if(!token) {
 		return res.status(404).json({message:"not found"})
 	}
-	sessionModel.deleteOne({"token":token},function(err,session) {
-		if(err) {
-			console.log("Failed to delete session. Reason:",err);
-			return res.status(409).json({message:"conflict"})
-		}
-		if(!session) {
-			return res.status(404).json({message:"not found"})
-		}
+	if(req.session) {
+		req.logout();
+		req.session.destroy();
 		return res.status(200).json({message:"success"})
-	})
+	}
+	return res.status(409).json({message:"conflict"})
 })
 
 app.use("/api",isUserLogged,contactrouter);

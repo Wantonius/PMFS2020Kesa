@@ -1,5 +1,5 @@
 import React from 'react';
-import {FlatList,View,ScrollView,TouchableHighlight,Text,StyleSheet} from 'react-native';
+import {FlatList,View,ScrollView,Button,TouchableHighlight,Text,StyleSheet} from 'react-native';
 
 export default class ShoppingList extends React.Component {
 
@@ -27,17 +27,21 @@ export default class ShoppingList extends React.Component {
 		})
 		return(
 			<View style={{height:300}}>
-				<ScrollView>
+				<Button onPress={() => this.props.navigation.navigate('Add Item')} title="Add Item"/>
 					<FlatList 	data={this.props.list}
 								renderItem={
 									({item}) => {
 										return (
 											<View style={styles.rowStyle}>
-												<Text style={styles.textStyle}>
+												<Text style={styles.textStyle}>			
 													Type:{item.type}
-													Count:{item.count}
-													Price:{item.price}
 												</Text>
+												<Text style={styles.textStyle}>	
+													Count:{item.count}
+												</Text>
+												<Text style={styles.textStyle}>	
+													Price:{item.price}
+												</Text>	
 												<TouchableHighlight style={styles.buttonStyle}
 													onPress={() => this.removeFromList(item.id)}>
 													<Text>Remove</Text>
@@ -47,7 +51,6 @@ export default class ShoppingList extends React.Component {
 									}
 								}
 								keyExtractor={item => ""+item.id}/>
-				</ScrollView>
 			</View>
 		)
 	}

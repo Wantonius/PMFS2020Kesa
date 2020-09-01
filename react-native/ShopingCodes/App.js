@@ -39,11 +39,11 @@ export default class App extends React.Component {
 	  return (
 		<NavigationContainer>
 		<Stack.Navigator>
-			<Stack.Screen name="list">
+			<Stack.Screen name="Shopping List">
 			{props => <ShoppingList {...props} removeFromList={this.removeFromList}
 			list={this.state.list}/>}
 			</Stack.Screen>
-			<Stack.Screen name="add">
+			<Stack.Screen name="Add Item">
 			{props => <ShoppingForm {...props} addToList={this.addToList}/>}
 			</Stack.Screen>
 		</Stack.Navigator>

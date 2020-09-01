@@ -3,6 +3,10 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import ShoppingForm from './ShoppingForm';
 import ShoppingList from './ShoppingList';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+
+const Stack = createStackNavigator();
 
 export default class App extends React.Component {
   
@@ -33,11 +37,17 @@ export default class App extends React.Component {
   
   render() {
 	  return (
-		<View style={styles.container}>
-			<ShoppingForm addToList={this.addToList}/>
-			<ShoppingList removeFromList={this.removeFromList}
-						list={this.state.list}/>
-		</View>
+		<NavigationContainer>
+		<Stack.Navigator>
+			<Stack.Screen name="list">
+			{props => <ShoppingList {...props} removeFromList={this.removeFromList}
+			list={this.state.list}/>}
+			</Stack.Screen>
+			<Stack.Screen name="add">
+			{props => <ShoppingForm {...props} addToList={this.addToList}/>}
+			</Stack.Screen>
+		</Stack.Navigator>
+		</NavigationContainer>
 	  );
   }
 }

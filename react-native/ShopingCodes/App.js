@@ -1,7 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import ShoppingForm from './ShoppingForm'
+import ShoppingForm from './ShoppingForm';
+import ShoppingList from './ShoppingList';
 
 export default class App extends React.Component {
   
@@ -34,6 +35,8 @@ export default class App extends React.Component {
 	  return (
 		<View style={styles.container}>
 			<ShoppingForm addToList={this.addToList}/>
+			<ShoppingList removeFromList={this.removeFromList}
+						list={this.state.list}/>
 		</View>
 	  );
   }

@@ -14,12 +14,14 @@ muodossa
   {
     "from": "test2",
     "messagetoken": "9Ei4ghA9E7Ce6j03",
-    "message": "moi"
+    "message": "moi",
+	"id":100
   },
   {
     "from": "test",
     "messagetoken": "9Ei4ghA9E7Ce6j03",
-    "message": "moi"
+    "message": "moi",
+	"id":101
   }
 ]
 

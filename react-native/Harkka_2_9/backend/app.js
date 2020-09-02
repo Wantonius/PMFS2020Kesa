@@ -11,6 +11,7 @@ let messageDatabase = []
 let registeredUsers = [];
 let usersToMessage = [];
 let loggedSessions = [];
+let id = 100;
 
 //MIDDLEWARE
 
@@ -136,8 +137,10 @@ app.post("/api/messages", function(req,res) {
 	let item = {
 		from:req.session.user,
 		messagetoken:req.body.messagetoken,
-		message:req.body.message
+		message:req.body.message,
+		id:id
 	}
+	id++;
 	messageDatabase.push(item);
 	res.status(200).json({"message":"success"});
 });

@@ -1,0 +1,45 @@
+Messaging App React Nativella
+
+URL:  https://pm-messageapp-harkka.herokuapp.com/
+
+API 
+
+/register POST rekisteröinti tavalliseen tapaan
+/login POST login tavalliseen tapaan 
+/logout POST 
+
+/api/messages GET vaatii loginin ja tokenin. Palauttaa itselle tulleet messaget
+muodossa 
+[
+  {
+    "from": "test2",
+    "messagetoken": "9Ei4ghA9E7Ce6j03",
+    "message": "moi"
+  },
+  {
+    "from": "test",
+    "messagetoken": "9Ei4ghA9E7Ce6j03",
+    "message": "moi"
+  }
+]
+
+/api/messages POST vaatii tokenin ja bodyn muodossa 
+{
+	"message": <haluttu viesti>,
+	"messagetoken: Kohteen messagetoken.
+}
+
+/api/users GET vaatii tokenin. Palauttaa kaikkien usereiden perustiedot viestien
+lähettämistä varten. Rakenne
+[
+  {
+    "username": "test3",
+    "messagetoken": "EHEFJ8JJG80I1730"
+  }
+]
+
+Tehdään messaging app, jossa on kolme pagea. Ensin on Loginpage, jossa logataan sisään.
+Sitten on sivu omien viestien lukemiselle sekä sivu viestien lähettämiseen muille.
+Tehkää yhteistyötä!
+
+Ajossa olevan backendin koodi löytyy gitistä 

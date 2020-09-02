@@ -13,19 +13,24 @@ export default class App extends React.Component {
   constructor(props) {
 	  super(props);
 	  this.state= {
-		  list:[]
+		  list:[],
+		  isLogged:false,
+		  token:""
 	  }
   }
   
   componentDidMount() {
-	  this.getList();
+	  if(this.state.isLogged) {
+		this.getList();
+	  }
   }
   
   getList = () => {
 	  let request = {
 		  method:"GET",
 		  mode:"cors",
-		  headers:{"Content-type":"application/json"}
+		  headers:{"Content-type":"application/json",
+					"token":this.state.token}
 	  }
 	  fetch("http://pm-harkka-backend.herokuapp.com/api/shopping",request).then(response => {
 		if(response.ok) {
@@ -48,7 +53,8 @@ export default class App extends React.Component {
 	let request = {
 		method:"POST",
 		mode:"cors",
-		headers:{"Content-type":"application/json"},
+		headers:{"Content-type":"application/json",
+				"token":this.state.token},
 		body:JSON.stringify(item)
 	}
 	fetch("http://pm-harkka-backend.herokuapp.com/api/shopping",request).then(response => {
@@ -63,11 +69,21 @@ export default class App extends React.Component {
   }
   
   removeFromList = (id) => {
-	  let tempId = parseInt(id,10);
-	  let tempList = this.state.list.filter(item => item.id !== tempId);
-	  this.setState({
-		  list:tempList
-	  })
+	let request = {
+		method:"DELETE",
+		mode:"cors",
+		headers:{"Content-type":"application/json",
+				"token":this.state.token}
+	}
+	fetch("http://pm-harkka-backend.herokuapp.com/api/shopping/"+id,request).then(response => {
+		if(response.ok) {
+			this.getList();
+		} else {
+			console.log("Server responded with status:",response.status);
+		}
+	}).catch(error => {
+		console.log("Server responded with error:",error);
+	});
   }
   
   render() {

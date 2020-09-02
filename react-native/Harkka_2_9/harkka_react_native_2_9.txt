@@ -42,4 +42,7 @@ Tehdään messaging app, jossa on kolme pagea. Ensin on Loginpage, jossa logataa
 Sitten on sivu omien viestien lukemiselle sekä sivu viestien lähettämiseen muille.
 Tehkää yhteistyötä!
 
+Lähetyskohteen valintaan voi käyttää esim. React Native Pickeriä
+https://github.com/react-native-community/react-native-picker
+
 Ajossa olevan backendin koodi löytyy gitistä 
